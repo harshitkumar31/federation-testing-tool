@@ -2,12 +2,15 @@ const gql = require("graphql-tag");
 const { executeGraphql } = require("../");
 
 const typeDefs = gql`
+  scalar JSON
+
   extend type Product @key(fields: "upc") {
     upc: String! @external
     weight: Int @external
     price: Int @external
+    random: JSON @external
     inStock: Boolean
-    shippingEstimate: Int @requires(fields: "price weight")
+    shippingEstimate: Int @requires(fields: "price weight random")
   }
 `;
 
@@ -53,6 +56,7 @@ describe("Based on the data from the external service", () => {
         upc: "1",
         weight: 10,
         price: 14000,
+        random: {}
       })
     };
 
@@ -71,6 +75,7 @@ describe("Based on the data from the external service", () => {
         upc: "1",
         weight: 10,
         price: 10,
+        random: {}
       })
     };
 

@@ -2,6 +2,7 @@ const gql = require("graphql-tag");
 const { executeGraphql } = require("../");
 
 const typeDefsProducts = gql`
+  scalar JSON
   extend type Query {
     topProducts(first: Int = 5): [Product]
   }
@@ -11,10 +12,12 @@ const typeDefsProducts = gql`
     name: String
     price: Int
     weight: Int
+    random: JSON
   }
 `;
 
 const typeDefsInventory = gql`
+  scalar JSON
   extend type Mutation {
     addInventoryForProduct(upc: String!, inStock: Boolean): Product
     returnContext: String!
@@ -24,7 +27,8 @@ const typeDefsInventory = gql`
     weight: Int @external
     price: Int @external
     inStock: Boolean
-    shippingEstimate: Int @requires(fields: "price weight")
+    shippingEstimate: Int @requires(fields: "price weight random")
+    random: JSON @external
   }
 `;
 
@@ -90,7 +94,10 @@ describe("Based on the mocked data from the external service", () => {
         upc: "1",
         name: "Table",
         weight: 10,
-        price: 10
+        price: 10,
+        random: {
+          "a": "abc"
+        }
       })
     };
 
@@ -107,7 +114,10 @@ describe("Based on the mocked data from the external service", () => {
         upc: "1",
         name: "Table",
         weight: 10,
-        price: 14000
+        price: 14000,
+        random: {
+          "a": "abc"
+        }
       })
     };
 
@@ -136,7 +146,8 @@ test("should allow for using mutations, going across the services", async () => 
       upc: "3",
       name: "Hello",
       weight: 10,
-      price: 14000
+      price: 14000,
+      
     })
   };
 

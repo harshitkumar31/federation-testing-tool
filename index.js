@@ -21,6 +21,8 @@ const {
   buildContextsPerService
 } = require("./helpers/buildContextsPerService");
 
+const inBuiltTypes = ['Int', 'Float', 'String', 'Boolean'];
+
 function buildLocalService(modules) {
   const schema = buildFederatedSchema(modules);
   return new LocalGraphQLDataSource(schema);
@@ -69,6 +71,8 @@ function prepareProviderService(service) {
     )
     .filter(d => d.kind === "ObjectTypeExtension");
 
+  const scalars = [];
+
   typeDefsForMockedService.definitions.forEach(def => {
     def.kind = "ObjectTypeDefinition";
     allTypeNames.push(def.name.value);
@@ -77,9 +81,18 @@ function prepareProviderService(service) {
       f.directives.find(d => d.name.value === "external")
     );
     def.fields.forEach(f => {
+      if(f.type.kind === 'NamedType' && f.type.name && f.type.name.value) {
+        if(!inBuiltTypes.includes(f.type.name.value)) {
+          scalars.push(f.type.name.value);
+        }
+    }
+
       f.directives = f.directives.filter(d => d.name.value !== "external");
     });
   });
+
+  const scalarDefintions = scalars.map(s => `scalar ${s}`).join('\n');
+
 
   if (allTypeNames.length) {
     const typesQueries = allTypeNames.map(n => `_get${n}: ${n}`).join("\n");
@@ -88,6 +101,7 @@ function prepareProviderService(service) {
           ${typesQueries}
         }
         ${print(typeDefsForMockedService)}
+        ${scalarDefintions}
       `;
 
     // I'm doing it like this because otherwise IDE screams at me for an incorrect GraphQL string
